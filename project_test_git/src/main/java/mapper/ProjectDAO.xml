@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DAO.ProjectDAO">
+
+	<select id="get_user_id_by_user_name" resultType="String">
+		select user_id from user_info where user_name=#{user_name}
+	</select>
+
+	<update id="finish_agile">
+		update mile_agile set list_status=1 where list_name=#{list_name}
+	</update>
+	
+	<select id="get_files_to_download" parameterType="Project.DTO.Pro_file" resultType="Project.DTO.Pro_file">
+		select * from pro_file where project_no=#{project_no} and mile_col_no =#{mile_col_no}
+	</select>
+	
+	<insert parameterType="Project.DTO.Pro_file" id="uploadFile">
+	 insert into pro_file(profile_no,o_name,file_name,file_size,mile_col_no,project_no,project_name,data_content) 
+	 VALUES (profile_no_index.nextval,#{o_name},#{file_name},#{file_size},#{mile_col_no},#{project_no},#{project_name},#{data_content})
+	  </insert>
+	  
+	 <select id="get_project_name_by_project_no" resultType="String">
+	 	select project_name from project where project_no=#{project_no}
+	 </select> 
+	
+	
+	<select id="get_dept_no_to_spread_at_select_tag" resultType="integer">
+		select dept_no from dept where dept_name = #{dept_name}
+	</select>
+	
+	<select id="get_user_id_to_spread_at_select_tag" resultType="Emp.DTO.EMP">
+		select * from emp where dept_no=#{dept_no}
+	</select>
+	
+	<select id="get_user_info_to_spread_at_select_tag" resultType="User.DTO.User_info" parameterType="Emp.DTO.EMP">
+	    select * from user_info where user_id=#{user_id}
+	</select>
+	
+
+	<select id="get_all_dept_to_create_project" resultType="Emp.DTO.Dept" >
+		select * from dept
+	</select>
+
+	<delete id="delete_re">
+		delete from re where re_no=#{re_no}
+	</delete>
+	
+	<select id="get_col_name_after_update" parameterType="Project.DTO.Mile_frame_side" resultType="String">
+		select mile_col_name from mile_frame_side where project_no=#{project_no} and mile_col_no=#{mile_col_no}
+	</select>
+	
+	
+	<update id="update_col_name" parameterType="Project.DTO.Mile_frame_side">
+		update mile_frame_side set mile_col_name=#{mile_col_name} where project_no=#{project_no} and mile_col_no=#{mile_col_no}
+	</update>
+	
+	
+	
+	<select id="get_alph_cate_from_alph_title_by_alph_title" resultType="String">
+		select  alph_cate from alph_title where alph_title=#{alph_title}
+	</select>
+
+	<select id="get_alph_loc_from_info_alph" resultType="Project.DTO.info_alph" parameterType="Project.DTO.Mile_agile">
+		select * from info_alph where project_no=#{project_no} and alph_loc=#{alph_loc}
+	</select>
+
+	<select id="get_alph_loc_from_mile_agile" resultType="Project.DTO.Mile_agile" parameterType="Project.DTO.Mile_agile">
+		select * from Mile_agile where project_no=#{project_no} and list_name = #{list_name}
+	</select>
+
+	<select id="getAllList" resultType="Project.DTO.Board">
+		select * from board
+	</select>
+	
+	<select id="callinfo_alph" resultType="String" parameterType="Project.DTO.info_alph">
+		select alph_loc from info_alph where alph_title=#{alph_title} and project_no=#{project_no}
+	</select>
+	
+	<select id="callinfo_alph_forscore" resultType="String" parameterType="Project.DTO.info_alph">
+		select alph_loc from info_alph where alph_title=#{alph_title} and project_no=#{project_no} and alph_loc like '%'||#{col_no}
+	</select>
+	
+	<select id="callinfo_alph_foragigle" resultType="Project.DTO.info_alph" parameterType="Project.DTO.info_alph">
+		select * from info_alph where project_no=#{project_no} and alph_loc like '%'||#{col_no}
+	</select>
+	
+
+	
+	<insert id="create_agile" parameterType="Project.DTO.Mile_agile">
+		  insert into mile_agile(list_no, list_name, project_no, alph_loc,list_status) values (list_no_index.nextval,#{list_name},#{project_no},#{alph_loc},0)
+	</insert>
+	
+	<select id="get_agile" parameterType="integer" resultType="Project.DTO.Mile_agile">
+		  select distinct project_no, list_name,list_status from mile_agile where project_no = #{project_no} order by list_status desc
+	</select>
+	
+	
+	<select id="calltotal_score" resultType="integer" parameterType="Project.DTO.info_alph">
+		select alph_total from info_alph where alph_title=#{alph_title} and project_no=#{project_no} 
+	</select>
+	
+	
+	
+	<select id="getAllProject" resultType="Project.DTO.Project">
+		select * from Project
+	</select>
+	
+	<insert id="insertmemo" parameterType="Project.DTO.Board">
+		  insert into board(board_no,
+		                   
+		                    board_content,
+		                    board_date,
+		                    board_end,
+		                    user_id,
+		                    board_order,
+		                    list_name,
+		                    project_no,
+		                    list_no
+		                    )
+		                    values
+		                    (Board_no_index.nextval,#{board_content},sysdate,#{board_end},#{user_id},(select count(*)from board)+1,#{list_name},#{project_no},1)
+	</insert>
+	
+	
+	
+	<insert id="insertre" parameterType="Project.DTO.Re">
+		  insert into re(re_no,
+		  				 re_content,
+		  				 re_date,
+		  				 user_id,
+		  				 board_no
+		                    )
+		                    values
+		                    (re_no_index.nextval,#{re_content},sysdate,'gotogoto',#{board_no})
+	</insert>
+	
+	<select id="getAllBoard" resultType="Project.DTO.Board">
+		select * from board order by board_order
+	</select>
+	
+	<select id="getAllBoard_by_mile_agile" resultType="Project.DTO.Board" parameterType="Project.DTO.Mile_agile">
+		 select * from board where project_no=#{project_no} and list_name=#{list_name} order by board_order
+	</select>
+	
+	<delete id="delete_board">
+		delete board where board_no=#{board_no}
+	</delete>
+	
+	<delete id="delete_board_re">
+		delete re where board_no=#{board_no}
+	</delete>
+	
+	<select id="get_col_name_to_edit" resultType="Project.DTO.Mile_frame_side">
+		select * from mile_frame_side where project_no=#{project_no} order by mile_col_no
+	</select>
+
+	<update id="updateorder"  parameterType="Project.DTO.Board">
+		update board set board_order=#{board_order},list_no=#{list_no} where board_no=#{board_no}
+	</update>
+
+	<select id="getmemo" resultType="Project.DTO.Board">
+		select * from board where board_no=#{board_no}
+	</select>
+	
+	<select id="getrememo" resultType="Project.DTO.Re">
+		select * from re where board_no=#{board_no}
+	</select>
+	
+	<select id="callcard" resultType="Project.DTO.Alph_content">
+		select * from alph_content where alph_title=#{alph_title}
+	</select>
+	
+	
+	
+	
+	
+	<select id="callscore" parameterType="Project.DTO.Score" resultType="integer">
+		select alph_score from Score where alph_content_no=#{alph_content_no} and project_no=#{project_no}
+	</select>
+	
+	<select id="callAllcard" resultType="Project.DTO.Alph_title">
+		select * from Alph_title
+	</select>
+	
+	
+	
+	
+	<select id="callAllcard_create" resultType="Project.DTO.Alph_title">
+		select * from Alph_title
+	</select>
+	
+	<select id="callallcardcontent" resultType="Project.DTO.Alph_content">
+		select * from Alph_content
+	</select>
+	
+	
+	
+	<update id="updatecard"  parameterType="Project.DTO.Alph_title">
+		update info_alph set alph_loc=#{alph_loc} where alph_title=#{alph_title}
+	</update>
+	
+	<update id="updatescore"  parameterType="Project.DTO.Score">
+		update score set alph_score=#{alph_score} where alph_content_no=#{alph_content_no}
+	</update>
+	
+	<update id="updatescore_total" parameterType="Project.DTO.info_alph" >
+		update info_alph set alph_total=(select Round(avg(alph_score),1) from score where alph_title=#{alph_title}) where alph_title=#{alph_title}
+	</update>
+	
+	<insert id="createProject" parameterType="Project.DTO.Project">
+		  insert into project(project_no,project_name,project_start,project_end)
+		                    values
+		                    (project_no_index.nextval,#{project_name},#{project_start},#{project_end})
+	</insert>
+	
+	
+	
+	<insert id="createCardforeachMilestone" parameterType="Project.DTO.createCardforeachMilestone">
+		  insert into info_alph(project_no,alph_total,alph_title,alph_loc) values (#{project_no},1,#{alph_title},'base')
+	</insert>
+	
+	<insert id="createContentforeachProject" parameterType="Project.DTO.createContentforeachProject">
+		  insert into score(project_no,alph_title,alph_content_no,alph_score) values (#{project_no},#{alph_title},#{alph_content_no},1)
+	</insert>
+	
+	
+	<select id="getProjectno" parameterType="Project.DTO.Project" resultType="Project.DTO.Project">
+		select * from project where project_name=#{project_name}
+	</select>
+	
+	
+	
+	<insert id="select_Col_to_create_milestone" parameterType="Project.DTO.Mile_frame_side">
+		  insert into mile_frame_side(project_no,project_name,mile_col_name,mile_col_no) values (#{project_no},#{project_name},'여기에 입력해 주세요',#{mile_col_no})
+	</insert>
+	
+	
+	
+	<select id="get_Col_count_from_Mile_frame_side"  resultType="Project.DTO.Mile_frame_side">
+		select * from mile_frame_side where project_no=#{project_no}
+	</select>
+	
+	<insert id="create_auth_for_project_auth">
+		insert into auth(auth_name,user_id) values ('ROLE_PROJECT_MANAGER',#{user_id})
+	</insert>
+	
+	<select id="get_emp_no_for_emp_list" resultType="integer">
+		select emp_no from emp where user_id=#{user_id}
+	</select>
+	
+	<insert id="create_auth_for_project_emp_list" parameterType="Emp.DTO.Emp_List">
+		insert into emp_list(emp_no,user_id,project_no,project_name,auth_name) 
+		values(#{emp_no},#{user_id},#{project_no},#{project_name},#{auth_name})
+	</insert>
+	
+	<insert id="insert_board_state" parameterType="Project.DTO.Board">
+	  insert into board (board_no,
+	                     board_content,
+	                     board_order,
+	                     board_date,
+	                     board_end,
+	                     user_id,
+	                     list_name
+	                     )
+	  values(BOARD_NO_INDEX.nextval,#{board_content},sysdate,#{board_end},#{user_id},#{list_name})
+	</insert>
+	
+	<update id="update_board_state"  parameterType="Project.DTO.Board">
+	  update board set board_state=1 where board_no=#{board_no}
+	</update>
+	
+	<!-- 프로젝트생성 이름 중복확인 -->
+	 <select id="project_name" resultType="Integer">
+		SELECT count(*) ck FROM PROJECT where PROJECT_NAME=#{PROJECT_NAME}
+	 </select>
+	 
+   <!-- 프로젝트 기간 가져오기 -->
+	 <select id="selet_Project_date" resultType="Project.DTO.Project">
+	 	select * from project where project_no = #{project_no}
+	 </select>
+	 
+</mapper>
+
+
+

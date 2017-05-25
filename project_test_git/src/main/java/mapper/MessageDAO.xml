@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper
+    PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DAO.MessageDAO">
+
+	<select id="getMSG" parameterType="String" resultType="DTO.Message">
+
+		select *
+		from message where receiver=#{receiver}
+	</select>
+	
+	<select id="setMSG" parameterType="String" resultType="DTO.Message">
+
+		select *
+		from message_send where sender=#{sender}
+	</select>
+
+
+	<insert id="composeMSG" parameterType="DTO.Message">
+		insert into
+		message(message_num, receiver, sender,
+		message_content,
+		date_of_receiving)
+		values(message_no_index.nextval, #{receiver},
+		#{sender},
+		#{message_content}, sysdate)
+	</insert>
+	
+	<insert id="composeMSG2" parameterType="DTO.Message">
+		insert into
+		message_send(message_num, receiver, sender,
+		message_content,
+		date_of_sending)
+		values(message_no_index.nextval, #{receiver},
+		#{sender},
+		#{message_content}, sysdate)
+		
+
+	</insert>
+
+
+	<delete id="deleteMSG" parameterType="DTO.Message">
+		delete message where
+		message_num=#{message_num}
+
+	</delete>
+	
+	<delete id="deleteMSG2" parameterType="DTO.Message">
+		delete message_send where
+		message_num=#{message_num}
+
+	</delete>
+
+
+
+
+
+</mapper>
+ 

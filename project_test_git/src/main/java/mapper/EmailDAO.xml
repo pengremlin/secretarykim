@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DAO.EmailDAO">
+
+	<insert id="emailComp" parameterType="Emp.DTO.Comp">
+	   insert into comp(comp_no,comp_name,licence,comp_email)
+	     values(comp_no.nextval,#{comp_name},#{licence},#{comp_email})
+	</insert>
+	
+	<select id="comp" parameterType="Emp.DTO.Comp" resultType="Integer">
+	  select comp_no from comp where comp_email=#{comp_email}
+	</select>
+	
+	<insert id="compAuthUser" parameterType="DTO.Auth">
+		  insert into auth values('ROLE_MASTER',#{user_id})                   
+	</insert>
+	
+	<!-- <insert id="jobComp" parameterType="Emp.DTO.Job">
+		  insert into job values(#{job_name},(select comp_no from comp where comp_no=#{comp_no}))              
+	</insert> -->
+	
+	<insert id="deptComp" parameterType="Emp.DTO.Dept">
+	      insert into dept values(#{dept_no},
+	                              '본사',00000000000,
+	                              #{comp_no})
+	</insert>
+	<insert id="empComp" parameterType="Emp.DTO.EMP">
+	      insert into emp(emp_no,
+	      emp_state,
+	      emp_date,
+	      emp_division,
+	      user_id
+	      ) values(#{emp_no},1,sysdate,0,#{user_id})
+	</insert>
+	
+		<select id="cname_check" resultType="Integer">
+		SELECT Count(*) ck FROM comp where comp_name=#{comp_name} 
+	</select>
+	
+	
+	<select id="licence_check" resultType="Integer">
+		SELECT count(*) ck FROM comp where licence=#{licence}
+	</select>
+	
+	<select id="email_check" resultType="Integer">
+		SELECT count(*) ck FROM comp where comp_email=#{comp_email}
+	</select>
+	
+	<select id="checkComp" resultType="Integer">
+		SELECT count(*) ck FROM comp where comp_name=#{comp_name} 
+		or licence=#{licence} or comp_email=#{comp_email}
+	</select>
+	
+	<!-- 회사번호 DB에 있는지 확인  -->
+	 <select id="comp_no" resultType="Integer">
+		SELECT count(*) ck FROM comp where comp_no=#{comp_no}
+	 </select>
+	  
+	  <!-- 부서번호  중복확인 -->
+	<select id="dept_no" resultType="Integer">
+		SELECT count(*) ck FROM dept where dept_no=#{dept_no}
+	</select>
+	
+	
+	 
+	  <!-- 부서등록 유효성 -->
+	  <insert id="deptreg" parameterType="Emp.DTO.Dept">
+	  	insert into dept(dept_no, dept_name, dept_ph, comp_no) 
+	  	values(#{dept_no},#{dept_name},#{dept_ph},#{comp_no})
+	  </insert>
+</mapper>
+
+
+
+
+
+
+

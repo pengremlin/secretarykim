@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+  <!DOCTYPE tiles-definitions PUBLIC
+       "-//Apache Software Foundation//DTD Tiles Configuration 2.1//EN"
+       "http://tiles.apache.org/dtds/tiles-config_2_1.dtd">
+<tiles-definitions> 
+	 
+	<definition name="mypage.chattingRoom" template="/WEB-INF/views/mypage/inc/layout2.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="content" value="/WEB-INF/views/mypage/chattingRoom.jsp" />
+	</definition>
+	
+	<definition name="empop.*" template="/WEB-INF/views/emp/inc/layout2.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="content" value="/WEB-INF/views/emp/{1}.jsp" />
+	</definition>
+	
+	
+	<!-- return home.index -->
+	 <definition name="home.index" template="/WEB-INF/views/home/inc/layout.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="header"  value="/WEB-INF/views/home/inc/header.jsp" />
+		<put-attribute name="navi"   value="/WEB-INF/views/home/inc/navi.jsp" />
+		<put-attribute name="content" value="/WEB-INF/views/home/index.jsp" />
+		<put-attribute name="footer"  value="/WEB-INF/views/home/inc/footer.jsp" />
+	</definition>
+	
+	<!-- return joinus.* -->
+	 <definition name="joinus.*" template="/WEB-INF/views/joinus/inc/layout.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="header"  value="/WEB-INF/views/joinus/inc/header.jsp" />
+		<put-attribute name="navi"   value="/WEB-INF/views/joinus/inc/navi.jsp" />
+		<put-attribute name="content" value="/WEB-INF/views/joinus/{1}.jsp" />
+		<put-attribute name="footer"  value="/WEB-INF/views/joinus/inc/footer.jsp" />
+	</definition>
+	
+	 <definition name="mboard.*" template="/WEB-INF/views/mboard/inc/layout.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="header"  value="/WEB-INF/views/mboard/inc/header.jsp" />
+		<put-attribute name="content" value="/WEB-INF/views/mboard/{1}.jsp" />
+	</definition>
+	
+	<!-- return *.* -->
+	 <definition name="*.*" template="/WEB-INF/views/{1}/inc/layout.jsp">
+		<put-attribute name="title"   value="::KIMBUSIOR" />
+		<put-attribute name="header"  value="/WEB-INF/views/common/header.jsp" />
+		<put-attribute name="navi"   value="/WEB-INF/views/{1}/inc/navi.jsp" />
+		<put-attribute name="content" value="/WEB-INF/views/{1}/{2}.jsp" />
+		<put-attribute name="footer"  value="/WEB-INF/views/common/footer.jsp" />
+	</definition>
+	
+	
+	
+</tiles-definitions>
+
+
+
+
+
+
+

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+@Project : Momento
+@File name : EMPDAO
+@Data : 2016.6.02
+@Desc : EMPDAO Mapper
+ -->
+
+<mapper namespace="DAO.LeanDAO">
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 모든 사원 정보 불러오기
+	@param spec : list 
+	@return : EMP 
+	-->
+	<insert id="insert_Lean"  parameterType="String" >
+		insert into lean (lean_no, project_no,project_name, lean_content, lean_order)
+		 values(lean_index.nextval ,#{project_no} , #{project_name} , #{lean_content} , 1 )
+	</insert>
+	
+	<update id="update_Lean" parameterType="Project.DTO.Lean">
+		update lean set lean_order=#{lean_order} where lean_no=#{lean_no}
+	</update>
+	
+	<select id="select_Lean"  resultType="Project.DTO.Lean">
+		select * from lean where project_no = #{project_no}
+	</select>
+	
+	<delete id="deletelean" parameterType="Project.DTO.Lean">
+		delete from lean where lean_no = #{lean_no}
+	</delete>
+	
+	<select id="getProject_info" resultType="Project.DTO.Project">
+		select * from project where project_no = #{project_no}
+	</select>
+	
+	
+	
+</mapper>
+
+
+
+
+
+
+

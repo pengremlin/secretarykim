@@ -1,0 +1,384 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+@Project : Momento
+@File name : GoodsDAO
+@Data : 2016.06.19
+@Desc : 주문/납품 관련 매퍼설정
+ -->
+<mapper namespace="DAO.GoodsDAO">
+
+	<!-- 
+	@date :2016. 6. 19
+	@description : 주문상태 전체 리스트 (appr_no = 4 처리중 5 종결 6 보류)
+	@param spec : list 
+	@return : Request 
+	-->
+	<select id="getAllRequest" resultType="Goods.DTO.ReqState">
+		select * from
+               ( select rownum num, N.* from
+                	( select c.cust_name, r.request_no, r.request_name, r.start_date, r.end_date, r.expact_pay, a.appr_name
+						from cust c join request r on c.cust_no = r.cust_no
+						join appr a on a.appr_no = r.appr_no
+						order by r.request_no desc) N
+              ) WHERE NUM BETWEEN 1 + (#{page}-1)*5 AND 5 + (#{page}-1)*5
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 19
+	@description : 주문상태 종결 리스트
+	@param spec : list 
+	@return : Request 
+	-->
+	<select id="getReqState" resultType="Goods.DTO.ReqState">
+		select c.cust_name, r.request_no, r.request_name, r.start_date, r.end_date, r.expact_pay, a.appr_name
+			from cust c join request r on c.cust_no = r.cust_no
+			join appr a on a.appr_no = r.appr_no
+			where a.appr_no = #{param1} order by r.request_no desc
+	</select>
+	
+	
+	<!-- 보류리스트 페이지 처리 -->
+	<select id="getPostPlist" resultType="Goods.DTO.ReqState">
+	 select * from
+               ( select rownum num, N.* from
+                	( select c.cust_name, r.request_no, r.request_name, r.start_date, r.end_date, r.expact_pay, a.appr_name
+                		from cust c , request r , appr a 
+		                where c.cust_no=r.cust_no
+		                and r.appr_no=a.appr_no
+		                and a.appr_no = #{param1}
+		                order by r.request_no desc) N
+              ) WHERE NUM BETWEEN 1 + (#{param2}-1)*5 AND 5 + (#{param2}-1)*5
+	</select>
+	
+	<!-- 리스트 총 갯수 세기 -->
+	<select id="getListCount" resultType="Integer">
+       SELECT count(*) FROM request where appr_no=#{appr_no}
+    </select>
+    
+    <!-- 전체리스트 갯수 세기 -->
+	<select id="getListCountAll" resultType="Integer">
+		SELECT count(*) FROM request
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 19
+	@description : 주문내역 정보 입력하기 우선은 항상 처리중(4)으로
+	@param spec : Goods.DTO.Request
+	-->
+	<insert id="insertReq" parameterType="Goods.DTO.Request_Doc">
+		  insert into request (
+		  					request_no, request_name, request_cont, 
+		  					start_date, end_date, request_state, expact_pay,
+		                    data_no, cust_no, appr_no
+		                    )
+		              values (
+		              request_no_index.nextval,#{request_name},#{request_cont},
+		              #{start_date},#{end_date},1,#{expact_pay},
+		              		#{data_no},#{cust_no},4
+		              		)
+	</insert>
+	
+	<!-- 
+	@date :2016. 6. 19
+	@description : 주문내역 상태 변경 삭제 버튼 누를때
+	-->
+	<update id="changeReqState">
+		update request set request_state = 0 where request_no = #{request_no}
+	</update>
+	
+	
+	<!-- 
+	@date :2016. 6. 19
+	@description : 주문내역 상세보기 
+	@param spec : int
+	@return : Goods.DTO.Request 
+	-->
+	<select id="getReq" parameterType="Integer" resultType="Goods.DTO.Request_Doc">
+		select * from request where request_no=#{request_no}
+	</select> 
+	
+	<select id="getReqlist" resultType="Goods.DTO.Reqlist">
+		select * from request_list where request_no = #{request_no}
+	</select>
+	
+	<!-- <select id="getReq" resultType="Goods.DTO.Reqlist">
+		select r.request_no, r.request_name, 
+				r.request_cont, r.start_date, r.end_date, r.request_state,
+				r.expact_pay, r.data_no, r.cust_no, r.appr_no,
+				rl.project_no, rl.project_name
+				from request r join request_list rl
+				on r.request_no = rl.request_no
+				where r.request_no = #{request_no};
+	</select> -->
+	
+	<!-- 
+	@date:2016. 6. 19
+	@description : 주문내역 수정하기
+	@param spec : Goods.DTO.Request
+	-->
+	<update id="updateReq" parameterType="Goods.DTO.Request_Doc">
+		update request set 
+				request_cont = #{request_cont},
+				end_date = #{end_date},
+				data_no = #{data_no}
+			where request_no = #{request_no}
+	</update>
+	
+	<!-- 
+	@date:2016. 6. 20 
+	@description : 승인번호 변경하기 6은 보류 5는 종결 4는 처리중
+	@param spec : Goods.DTO.Request
+	-->
+	<update id="changeReqAppr">
+		update request 
+			set appr_no = ${param1}
+			where request_no = ${param2}
+	</update>
+	
+	<!-- 
+	@date:2016. 6. 22 
+	@description : 파일업로드하기
+	@param spec : Goods.DTO.Request
+	-->
+	<insert id="uploadFile" parameterType="Goods.DTO.Data">
+		insert into data(data_no, data_content, orign_name, save_name, data_state)
+		values (data_no_index.nextval, #{data_content}, #{orign_name}, #{save_name}, 1 )
+	</insert>
+	
+	
+	<!-- 파일리스트 열기 -->
+	<select id="openFlist" resultType="Goods.DTO.Data">
+		select * from 
+        ( select rownum num, N.* from
+             ( select * from data where data_state = 1 order by data_no desc) N
+         ) WHERE NUM BETWEEN 1 + (#{page}-1)*5 AND 5 + (#{page}-1)*5
+	</select>
+	
+	<!-- 파일카운트 -->
+	<select id="getFileCount" resultType="Integer">
+		select count(*) from data where data_state =1
+	</select>
+	
+	<!-- 파일 삭제시 상태 변경-->
+	<update id="delFile">
+		update data 
+		set data_state = 0
+		where data_no = #{data_no}
+	</update>
+	
+	<!-- 납품명세서 등록 -->
+	<insert id="insertDeliver" parameterType="Goods.DTO.Deliver">
+		insert into deliver(deliver_no, request_no, 
+							deliver_name, deliver_cont, 
+							deliver_date, deliver_pay, 
+							deliver_state, cust_no, appr_no)
+		 			values (deliver_no_index.nextval, #{request_no}, #{deliver_name},
+		 					#{deliver_cont}, #{deliver_date}, #{deliver_pay}, 1, #{cust_no}, 5
+		 					)
+	</insert>
+	
+	<!-- 납품명세서 리스트 -->
+	<select id="getAllDeliver" resultType="Goods.DTO.Deliver">
+		select * from 
+        ( select rownum num, N.* from
+             ( select * from deliver where deliver_state = 1) N
+         ) WHERE NUM BETWEEN 1 + (#{page}-1)*5 AND 5 + (#{page}-1)*5
+	</select>
+	
+	
+	<!-- 납품명세서 갯수세기  -->
+	<select id="getDeliCount" resultType="Integer">
+		select count(*) from deliver where deliver_state = 1
+	</select>
+	
+	 
+	<!-- 납품내역 상세보기 -->
+	<select id="getDetailDeli" parameterType="Integer" resultType="Goods.DTO.DetailDeli">
+		select c.cust_name, d.deliver_name, d.deliver_pay, d.deliver_date, d.request_no,
+				d.deliver_cont,f.save_name, f.orign_name
+				from cust c join deliver d
+				on c.cust_no = d.cust_no
+				join request r on d.request_no = r.request_no
+				join data f on r.data_no = f.data_no
+				where f.data_no in (select data_no from request where request_no = #{request_no})
+	</select>
+	
+	<!-- 납품문서 등록 -->
+	<update id="delDeliver">
+		update deliver set deliver_state = 0 where deliver_no = #{deliver_no}
+	</update>
+	
+	<!-- 주문문서 등록시 사원주문내역도 등록 -->
+	<insert id="insertReqDoc">
+		insert into emp_reqdoc(request_no, emp_no)
+		values(#{param1}, #{param2})
+	</insert>
+	
+	<!--  주문 등록시 사원 주문내역에 필요한 requst_no 가져오기-->
+	<select id="selectReqNo" resultType="Integer">
+		select request_no from request where request_name = #{request_name}
+	</select>
+	
+	<!-- ############ 거래처 ########### -->
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 리스트
+	@param spec : list 
+	@return : Cust 
+	-->
+	<select id="getAllCust" resultType="Goods.DTO.Cust">
+		select * from 
+        ( select rownum num, N.* from
+             ( select * from cust where cust_state = 1) N
+         ) WHERE NUM BETWEEN 1 + (#{page}-1)*5 AND 5 + (#{page}-1)*5
+	</select>
+	
+	<!-- 고객 갯수 세기 -->
+	<select id="getCustCount" resultType="Integer">
+		select count(*) from cust where cust_state = 1
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 08
+	@description : 한개의 거래처 보기
+	@param spec : int
+	@return : Cust 
+	-->
+	<select id="getCust" resultType="Goods.DTO.Cust">
+		select * from cust where cust_no=#{cust_no}
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 정보 입력하기
+	@param spec : Cust
+	-->
+	<insert id="insertCust" parameterType="Goods.DTO.Cust">
+		  insert into cust(cust_no,
+		  					cust_name,
+		                    cust_pre,
+		                    cust_ph1,
+		                    cust_ph2,
+		                    cust_add,
+		                    cust_fax,
+		                    cust_state)
+		                    values (cust_no_index.nextval,#{cust_name},#{cust_pre},
+		                    #{cust_ph1},#{cust_ph2},#{cust_add},#{cust_fax},'1')
+	</insert>
+	
+	<!-- 
+	@date:2016. 6. 08
+	@description : 거래처 수정하기
+	@param spec : Cust
+	-->
+	<update id="updateCust"  parameterType="Goods.DTO.Cust">
+		update cust set 
+				cust_name=#{cust_name},
+				cust_pre=#{cust_pre},
+				cust_add=#{cust_add},
+				cust_fax=#{cust_fax},
+				cust_ph1=#{cust_ph1},
+				cust_ph2=#{cust_ph2}
+			where cust_no=#{cust_no}
+	</update>
+	
+	<!-- 
+	@date :2016. 6. 10
+	@description : 통장 지우기 버튼 누르면 상태 변경
+	@param spec : int cust_no
+	-->
+	<update id="changeCustState">
+		update cust set cust_state = 0 where cust_no = #{cust_no}
+	</update>
+	
+	<!-- ############### 거래처 통장 ################### -->
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 통장 목록 전체 가져오기
+	@return : Cust_Acc 
+	-->
+	<select id="getAllCustAc" resultType="Goods.DTO.Cust_Acc">
+		select * from 
+        ( select rownum num, N.* from
+             ( select * from cust_acc) N
+         ) WHERE NUM BETWEEN 1 + (#{page}-1)*5 AND 5 + (#{page}-1)*5
+	</select>
+	
+	<!-- 갯수 세기 -->
+	<select id="getCustAccCount" resultType="Integer">
+		select count(*) from cust_acc
+	</select>
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 통장 등록하기
+	@param spec : Cust_Acc
+	-->
+	<insert id="insertCustAc" parameterType="Goods.DTO.Cust_Acc">
+		insert into cust_acc(cust_acc_no,cust_no,cust_acc_bank,cust_acc_num)
+						values(cust_acc_no_index.nextval, #{cust_no}, #{cust_acc_bank},#{cust_acc_num})
+	</insert>
+	
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 통장 삭제하기
+	@param spec : int cust_acc_no
+	-->
+	<delete id="delCustAc">
+		delete from cust_acc where cust_acc_no=#{cust_acc_no}
+	</delete>
+	
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 통장정보 가져오기
+	@param spec : int cust_acc_no
+	-->
+	<select id="getCustAc" resultType="Goods.DTO.Cust_Acc">
+		select * from cust_acc where cust_acc_no=#{cust_acc_no}
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 08
+	@description : 거래처 통장정보 수정하기
+	@param spec : Cust_Acc custacc
+	-->
+	<update id="updateCustAc" parameterType="Goods.DTO.Cust_Acc">
+		update cust_acc set
+						cust_no=#{cust_no},
+						cust_acc_bank=#{cust_acc_bank},
+						cust_acc_num=#{cust_acc_num}
+					where cust_acc_no=#{cust_acc_no}
+	</update>
+	
+	<!-- 
+	@date :2016. 6. 09
+	@description : 거래처 검색
+	-->
+	<select id="searchCust" resultType="Goods.DTO.Cust">
+		 SELECT * FROM cust WHERE cust_state = 1 and ${param1} LIKE '%${param2}%'
+	</select>
+	
+	<!-- 
+	@date :2016. 6. 25
+	@description : 프로젝트 검색
+	@param spec : String search1(검색종류), String search2(검색어)
+	-->
+	<select id="searchPro" resultType="Project.DTO.Project">
+		select * from project where ${param1} like '%${param2}%'
+	</select>
+
+	<select id="getProject" resultType="Project.DTO.Project">
+		select * from project where project_no = #{project_no}
+	</select>
+	
+	
+	<!-- reqlist에 등록하기 -->
+	<insert id="insertReqlist">
+		insert into request_list
+		values (#{param1}, #{param2}, #{param3})
+	</insert>
+</mapper>

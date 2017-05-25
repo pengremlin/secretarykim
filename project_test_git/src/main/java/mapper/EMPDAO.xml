@@ -1,0 +1,1226 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<!-- 
+@Project : Momento
+@File name : EMPDAO
+@Data : 2016.6.02
+@Desc : EMPDAO Mapper
+ -->
+
+<mapper namespace="DAO.EMPDAO">
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 모든 사원 정보 불러오기
+	@param spec : list 
+	@return : EMP 
+	-->
+	<select id="getAllList" parameterType="list" resultType="User.DTO.User_info">
+		select * from user_info ui
+              where ui.user_id not in
+              (select e.user_id
+              from user_info u join emp e
+              on u.user_id=e.user_id)
+	</select>
+	
+	<select id="getlistcount" resultType="Integer">
+	   select count(*) from user_info ui
+              where ui.user_id not in
+              (select e.user_id
+              from user_info u join emp e
+              on u.user_id=e.user_id)
+	</select>
+	
+	<select id="empUserList" parameterType="list" resultType="Emp.DTO.EMP">
+		select * from emp
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 한명의 사원 모든 정보 불러오기
+	@param spec : int
+	@return : User_info 
+	-->
+	<select id="getUser_Info" parameterType="Integer" resultType="User.DTO.User_info">
+		select * from user_info where user_no=#{user_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 한명의 사원 정보 불러오기
+	@param spec : int
+	@return : EMP 
+	-->
+	<select id="getEMP" parameterType="String" resultType="Emp.DTO.EMP">
+		select * from EMP where user_id=#{user_id}
+	</select>
+	
+	<select id="getEditEMP" parameterType="String" resultType="Emp.DTO.EMP">
+		select * from EMP where user_id=#{user_id}
+	</select>
+	
+	<update id="EditEMP" parameterType="String">
+		update emp set job_name=#{param1}
+					   where user_id=#{param2}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 사원 정보 입력하기
+	@param spec : EMP
+	-->
+	<insert id="insertEMP" parameterType="Emp.DTO.EMP">
+		  insert into EMP(  emp_no,
+		  					user_id,
+		                    emp_state,
+		                    emp_date,
+		                    emp_division,
+		                    job_name
+		                    )
+		                    values
+		                    (#{emp_no},#{user_id},0,sysdate,1,#{job_name})
+	</insert>
+	
+	<update id="updateEMP" parameterType="Emp.DTO.EMP">
+	   update emp set job_name=#{job_name} where user_id=#{user_id}
+	</update>
+	
+	<insert id="insertJOB" parameterType="Emp.DTO.Job">
+		  insert into job(job_name) values(#{job_name})
+	</insert>
+	
+	<delete id="delJOB">
+	  DELETE FROM job WHERE job_name =#{job_name}
+	</delete>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 사원 삭제하기
+	-->
+	<delete id="delEMP">
+		delete from emp where user_id=#{user_id}
+	</delete>
+	
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 근태추가
+	-->
+	<insert id="insertAtti">
+		  insert into atti(
+		  					atti_no,
+		  					emp_no,
+		                    atti_date
+		                    )
+		                    values
+		                    (atti_no_index.nextval,#{emp_no},sysdate)
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 출석
+	@param spec : Atte
+	-->
+	<insert id="insertAtte_go" parameterType="Emp.DTO.Atte">
+		  insert into atte(
+		  					atte_no,
+		                    atte_go,
+		                    atte_date,
+		                    atti_kind_no,
+		                    atti_no,
+		                    emp_no
+		                    )
+		                    values
+		                    (atte_no_index.nextval,sysdate,sysdate,10,
+		                    (select max(atti_no) from atti where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"'))
+							,2001)		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 퇴근
+	@param spec : Atte
+	-->
+	<update id="updateAtte_back" >
+		update atte set atte_back=sysdate 
+		where atte_no=(select ae.atte_no
+from atti ai join atte ae
+on ai.atti_no=ae.atti_no
+where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and ae.emp_no=#{emp_no})
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 출근 후 처음 회사에서 나갈경우
+	@param spec : Atte
+	-->
+	<update id="updateAtte_start"  parameterType="Emp.DTO.Atte">
+		update atte set atte_start=sysdate, atti_kind_no=12 
+					where atte_no=(select max(atte_no) from atte)
+					and emp_no=2001
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 출근 후 처음이후 회사에서 나갈경우
+	@param spec : Atte
+	-->
+	<insert id="insertAtte_start" >
+		  insert into atte(
+		  					atte_no,
+		  					atte_start,
+		                    atte_date,
+		                    atti_kind_no,
+		                    atti_no,
+		                    emp_no
+		                    )
+		                    values
+		                    (atte_no_index.nextval,sysdate,sysdate,12,
+		                    (select max(atti_no) from atti where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"'))
+							,#{emp_no})		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 외근 수 뽑기
+	@param spec : Atte 
+	@return : int 
+	-->
+	<select id="Atte_start" parameterType="Emp.DTO.Atte" resultType="int">
+		select count(atte_start) 
+			   from atte where TO_CHAR(atte_date,'YYYY"년" MM"월" DD"일"')
+			   =TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"')
+		
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 02.
+	@description : 출근 후 회사에서 나간 다음 들어올 경우
+	@param spec : Atte
+	-->
+	<update id="updateAtte_end"  parameterType="Emp.DTO.Atte">
+		update atte set atte_end=sysdate, atti_kind_no=13  
+					where atte_no=(select max(atte_no) from atte)
+					and emp_no=2001
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 07.
+	@description : 오늘 출근,퇴근,외출,복귀 내역 보여주기
+	@param spec : list 
+	@return : Atte 
+	-->
+	<select id="atteList" parameterType="list" resultType="Emp.DTO.Atte">
+		select ae.ATTE_START,ae.ATTE_BACK,ae.ATTE_DATE,ae.ATTE_END,ae.ATTE_GO,ae.emp_no,ae.atte_no
+		from atti ai join atte ae
+		on ai.ATTI_NO=ae.ATTI_NO
+		where TO_CHAR(ae.atte_date,'YYYY"년" MM"월" DD"일"')
+		=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and ae.emp_no=2001
+		order by ae.atte_no
+		
+	</select>
+	
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 선택한 근태 내역 보여주기
+	@param spec : int 
+	@return : Atte 
+	-->
+	<select id="getAtte" parameterType="int" resultType="Emp.DTO.Atte">
+		select * from Atte where atte_no=#{atte_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 08.
+	@description : 휴가 일지 작성
+	@param spec : Holi
+	-->
+	<insert id="insertHoli" parameterType="Emp.DTO.Holi">
+		 
+insert into holi(
+                       holi_no,
+                       holi_content,
+                       atti_no,
+                       atti_kind_no,
+                       emp_no
+                          )
+                          values
+                          (holi_no_index.nextval,#{holi_content},
+                          (select atti_no from atti where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+                     =TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and emp_no=#{emp_no}),20161,#{emp_no})
+	</insert>
+	
+	<!-- 만들기55555555555555
+	@date
+	:2016. 6. 0.
+	@description : 휴가 일지 수정
+	@param spec : Holi
+	-->
+	<update id="updateHoli"  parameterType="Emp.DTO.Holi">
+		update holi set holi_start = #{holi_start} , holi_end = #{holi_end}
+					where holi_no=#{holi_no}
+	</update>
+	
+	<update id="updateHoli2"  parameterType="Emp.DTO.Holi">
+		update holi set holi_start=#{holi_start}
+					where holi_no=#{holi_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 모든 휴가 내역 보여주기
+	@param spec : list 
+	@return : Holi 
+	-->
+	<select id="holiList" parameterType="list" resultType="Emp.DTO.Holi">
+		select * from Holi where emp_no=#{emp_no} order by holi_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 선택한 휴가 내역 보여주기
+	@param spec : list 
+	@return : Holi 
+	-->
+	<select id="getHoli" parameterType="int" resultType="Emp.DTO.Holi">
+		select * from Holi where holi_no=#{holi_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 근태 문서 작성
+	@param spec : Doc
+	-->
+	<insert id="insertDoc" parameterType="Emp.DTO.Doc">
+		  insert into doc(
+		  					doc_no,
+		                    doc_title,
+		                    doc_content,
+		                    doc_date,
+		                    atti_kind_no
+		                    )
+		                    values
+		                    (doc_no_index.nextval,#{doc_title},#{doc_content},
+		                    sysdate,#{atti_kind_no} )		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 근태 문서 수정
+	@param spec : Doc
+	-->
+	<update id="updateDoc"  parameterType="Emp.DTO.Doc">
+		update doc set doc_title=#{doc_title},doc_content=#{doc_content},
+					doc_date=sysdate,doc_start=#{doc_start},doc_end=#{doc_end}
+					where doc_no=#{doc_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 근태 문서 추가
+	@param spec : Doc_Kind
+	-->
+	<insert id="insertDoc_Kind" parameterType="Emp.DTO.Doc_Kind">
+		  insert into Doc_Kind(
+		  					atti_no,
+		                    doc_no,
+		                    emp_no,
+		                    doc_state,
+		                    appr_no
+		                    )
+		                    values
+		                    (atti_no=#{atti_no},doc_no=#{doc_no},emp_no=#{emp_no},0,1)		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 모든 근태문서 내역 보여주기
+	@param spec : list 
+	@return : Doc 
+	-->
+	<select id="docList" parameterType="list" resultType="Emp.DTO.Doc">
+		select * from Doc where emp_no=2001 order by doc_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 근태문서 내역 보여주기
+	@param spec : int 
+	@return : Doc 
+	-->
+	<select id="getDoc" parameterType="int" resultType="Emp.DTO.Doc">
+		select * from Doc where doc_no=#{doc_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 급여 작성
+	@param spec : Sal
+	-->
+	<insert id="insertSal" parameterType="Emp.DTO.Sal">
+		  insert into Sal(
+		  					sal_no,
+		  					step_no,
+		                    appr_no,
+		                    allow_no
+		                    )
+		                    values
+		                    (sal_no_index.nextval,1,1,1 )
+		                    		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 급여 수정
+	@param spec : Sal
+	-->
+	<update id="updateSal"  parameterType="Emp.DTO.Sal">
+		update Sal set sal=#{sal},sal_traffic=#{sal_traffic},sal_food=#{sal_food},
+					sal_date=#{sal_date},sal_division=#{sal_division},
+					allow=#{allow},sal_etc=#{sal_etc},sal_sum=#{sal_sum},step_no=#{step_no}
+					where sal_no=#{sal_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 급여 내역 작성
+	@param spec : Sal_History
+	-->
+	<insert id="insertSal_History" parameterType="Emp.DTO.Sal_History">
+		  insert into sal_history(
+		  							sal_no,
+		  							user_no,
+		                    		auth_no
+		                    	  )
+		                    	values
+		                    	(sal_no=#{sal_no},user_no=#{user_no},auth_no=#{auth_no})		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 모든 급여 내역 보여주기
+	@param spec : list 
+	@return : Sal 
+	-->
+	<select id="getSal" parameterType="list" resultType="Emp.DTO.Holi">
+		select * from Sal
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 03.
+	@description : 급여 내역 보여주기
+	@param spec : int 
+	@return : Sal 
+	-->
+	<select id="salList" parameterType="int" resultType="Emp.DTO.Holi">
+		select * from Sal where sal_no=#{sal_no}
+	</select>
+	
+	<!--44444
+	@date
+	:2016. 6. 08.
+	@description : 선택한 근태 내역 보여주기
+	@param spec : list 
+	@return : AttiContent 
+	-->
+	<select id="getAtti" parameterType="int" resultType="Emp.DTO.AttiContent">
+		select a.atti_no,a.atte_no,a.atte_go,a.atte_back,a.atte_start,a.atte_end,
+				h.holi_no,h.holi_start,h.holi_end
+		from atte a join holi h
+		on a.atti_no=#{atti_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 08.
+	@description : 휴가 Doc 작성
+	@param spec : insertHoliDoc
+	-->
+	<insert id="insertHoliDoc" parameterType="Emp.DTO.Doc">
+		 insert into doc(
+		  					doc_no,
+		                    doc_title,		                 
+		                    doc_date,
+		                    doc_start,
+		                    doc_end,
+		                    atti_kind_no,
+		                    holi_no
+		                    )
+		                    values
+		                    (doc_no_index.nextval,'휴가 일지',#{doc_content},
+		                    sysdate,sysdate,sysdate,21,1)   		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 09.
+	@description : 선택한 모든 Holi 리스트 가지고오기
+	@param spec : int 
+	@return : Holi 
+	-->
+	<select id="holiList2" parameterType="int" resultType="Emp.DTO.Holi">
+		select * from Holi 
+				 where emp_no=#{emp_no} 
+				 order by holi_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 09.
+	@description : 선택한 출근,퇴근,외출,복귀 내역 보여주기
+	@param spec : int 
+	@return : Atte 
+	-->
+	<select id="atteList2" parameterType="int" resultType="Emp.DTO.Atte">
+		select ae.ATTE_BACK,ae.ATTE_DATE,ae.ATTE_GO,ae.atte_no
+		from atti ai join atte ae
+		on ai.ATTI_NO=ae.ATTI_NO
+		where ae.atti_no=#{atti_no}
+		and TO_CHAR(ai.atti_date,'YYYY"년" MM"월" DD"일"')
+		=TO_CHAR(ae.atte_date,'YYYY"년" MM"월" DD"일"')
+		order by ae.atte_no
+		
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 근태 종류 추가
+	@param spec : Atti_Kind
+	-->
+	<insert id="insertAtti_Kind" parameterType="Emp.DTO.Atti_Kind">
+		  insert into atti_kind(
+		  							atti_kind_no,
+		  							atti_kind
+		                    	  )
+		                    	values
+		                    	('2016'||#{atti_kind_no},#{atti_kind,jdbcType=VARCHAR})		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 모든 atti_kind 리스트 가지고오기
+	@param spec : int 
+	@return : Atti_Kind 
+	-->
+	<select id="atti_KindList" parameterType="int" resultType="Emp.DTO.Atti_Kind">
+		select * from atti_kind 
+				 where atti_kind_no like 2 || '%'
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 기본 사항 보여 주기
+	@param spec : list 
+	@return : Allow_Basic 
+	-->
+	<select id="allowBasicList" resultType="Emp.DTO.Allow_Basic">
+		select e.emp_no,u.user_name,d.dept_name,e.emp_date,a.acc_num,j.job_name,d.dept_no,
+				(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY'))+1 as "step"
+				from emp e join user_info u
+				on e.user_id=u.user_id
+				join job j
+				on j.job_name=e.job_name
+				join comp c
+				on c.comp_no=j.comp_no
+				join dept d
+				on d.dept_no=e.dept_no
+				join acc a
+				on a.emp_no=e.emp_no
+				where e.emp_division!=0
+				order by e.emp_no			
+		
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 수당 기본 항목 작성
+	@param spec : Allow
+	-->
+	<insert id="insertAllowBasic" parameterType="Emp.DTO.Allow">
+		  insert into allow(
+		  						atti_kind_no,
+		  						atti_kind
+		                    	  )
+		                    	values
+		                    	(2016||#{atti_kind_no},#{atti_kind})		              		
+	</insert>
+	
+	
+	<!-- 
+	@date
+	:2016. 6. 14.
+	@description : 수당 항목 리스트 가져 오기
+	@param spec : int 
+	@return : Allow
+	-->
+	<select id="allowFormList" parameterType="int" resultType="Emp.DTO.Allow">
+		select * from allow order by allow_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 14.
+	@description : 수당  항목 작성
+	@param spec : Allow
+	-->
+	<insert id="insertAllowForm2" parameterType="Emp.DTO.AllowForm">
+		  insert into allow(
+		  						allow_no,
+		  						allow_name,
+		  						allow_division,
+		  						allow_calcul,
+		  						allow_c1,
+		  						allow_c2,
+		  						allow_mag,
+		  						appr_no
+		                    )
+		                    	values
+		                    	(allow_no_index.nextval,#{allow_name},#{allow_division},
+		                    	#{allow_calcul},#{allow_c1},#{allow_c2},#{allow_mag},2)		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 15.
+	@description : 수당  항목 작성
+	@param spec : Allow
+	-->
+	<update id="updateAllowForm"  parameterType="Emp.DTO.Allow">
+		update allow set allow_name=#{allow_name},allow_division=#{allow_division},
+						 allow_mag=#{allow_mag},allow_c1=#{allow_c1},allow_c2=#{allow_c2}
+					     where allow_no=#{allow_no}
+	</update> 
+	
+	<!-- 
+	@date
+	:2016. 6. 15.
+	@description : 계산 식 저장
+	@param spec : Allow
+	-->
+	<update id="updateAllowCal"  parameterType="Emp.DTO.Allow" >
+		update allow set allow_calcul=#{allow_calcul}
+					     where allow_no=#{allow_no}
+	</update> 
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 사원 리스트 보여주기
+	@param spec : x 
+	@return : Allow_Basic 
+	-->
+	<select id="empList" resultType="Emp.DTO.Allow_Basic">
+		select e.emp_no,u.user_name,d.dept_name,e.emp_date,a.acc_num,j.job_name
+				from emp e join user_info u
+				on e.user_id=u.user_id
+				join job j
+				on j.job_name=e.job_name
+				join comp c
+				on c.comp_no=j.comp_no
+				join dept d
+				on d.dept_no=e.dept_no
+				join acc a
+				on a.emp_no=e.emp_no
+				order by e.emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 15.
+	@description : 사원 기본 항목 작성
+	@param spec : Emp
+	-->
+	<insert id="insertEmp" parameterType="Emp.DTO.EMP">
+		  insert into Emp(
+		  						emp_no,
+		  						emp_state,
+		  						emp_date,
+		  						emp_end,
+		  						job_name,
+		  						user_id
+		                  )
+		                  values
+		                  (#{emp_no},#{emp_state},#{emp_date},#{emp_end},#{job_name},#{user_id})		              		
+	</insert>
+	
+	<!--
+	@date
+	:2016. 6. 17.
+	@description : 모든 근태 내역 내용 보여주기
+	@param spec : list 
+	@return : Atti_List 
+	-->
+	<select id="attiList" parameterType="list" resultType="Emp.DTO.Atti_List">
+		select ai.atti_no,e.emp_no,u.user_name,d.dept_name,j.job_name,ai.atti_date
+				from atti ai join emp e
+				on ai.emp_no=e.emp_no
+				join user_info u
+				on u.user_id=e.user_id
+				join job j
+				on j.job_name=e.job_name
+				join comp c
+				on c.comp_no=j.comp_no
+				join dept d
+				on d.dept_no=e.dept_no
+				order by ai.atti_no
+
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 급여 내역 작성
+	@param spec : Sal_List
+	-->
+	<insert id="insertAtte_go2" >
+		  insert into atte(atte_no,atte_date,atte_go,atti_kind_no,atti_no,emp_no) 
+  				values(atte_no_index.nextval,sysdate,sysdate,10,
+  				(select atti_no from atti where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and emp_no=#{emp_no}),#{emp_no})		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 출근후 또 출근 버튼
+	@param spec : Atte
+	-->
+	<update id="updateAtte_go2" parameterType="Emp.DTO.Atte">
+		update atte set atte_go=sysdate 
+		where atti_no=(select atti_no from atti where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"'))
+		      and emp_no=#{emp_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="attiAllList2" parameterType="int" resultType="Emp.DTO.Atti">
+		select * from atti 
+		where TO_CHAR(atti_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and emp_no=#{emp_no}
+	</select> 
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="atteAllList2" parameterType="int" resultType="Emp.DTO.Atte">
+		select * from atte 
+			where TO_CHAR(atte_date,'YYYY"년" MM"월" DD"일"')
+							=TO_CHAR(sysdate,'YYYY"년" MM"월" DD"일"') and emp_no=#{emp_no}
+	</select> 
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 부서 리스트
+	@param spec :  
+	@return : Dept
+	-->
+	<select id="dept_List"  resultType="Emp.DTO.Dept">
+		select * from dept order by dept_no
+	</select> 
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 급여 내역 작성
+	@param spec : Sal_List
+	-->
+	<insert id="insertSal_List" parameterType="Emp.DTO.Sal_List">
+		  insert into sal_list(
+		  							sal_list_no,
+		  							dept_name,
+		                    		sal_date,
+		                    		sal_list_title
+		                    	  )
+		                    	values
+		                    	(sal_list_no_index.nextval,#{dept_name},#{sal_date},#{sal_list_title})		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 급여 리스트
+	@param spec :  
+	@return : Sal_List
+	-->
+	<select id="sal_List"  resultType="Emp.DTO.Sal_List">
+		select * from sal_list order by sal_list_no
+	</select> 
+	
+	<!-- 
+	@date
+	:2016. 6. 13.
+	@description : 수당 기본 사항 보여 주기
+	@param spec : list 
+	@return : Allow 
+	-->
+	<select id="allowBasicList2" resultType="Emp.DTO.AllowList">
+		select e.emp_no,u.user_name,e.JOB_NAME,d.DEPT_NAME,a.ACC_NUM,s.sal,e.EMP_DATE,s.sal_sum
+				from emp e 
+				join user_info u
+				on e.USER_ID=u.USER_ID
+				join acc a
+				on a.EMP_NO=e.EMP_NO
+				join job j
+				on e.JOB_NAME=j.JOB_NAME
+				join comp c
+				on c.COMP_NO=j.COMP_NO
+				join dept d
+				on d.DEPT_NO=e.DEPT_NO
+				join sal_history sh
+				on e.EMP_NO=sh.EMP_NO
+				join sal s
+				on s.SAL_NO=sh.SAL_NO
+				
+		
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 기본 항목 작성
+	@param spec : EMP
+	-->
+	<update id="updateAllowBasic"  parameterType="Emp.DTO.EMP">
+		update emp 
+			set emp_division=#{emp_division} 
+			where emp_no=#{emp_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 항목 리스트 가져 오기
+	@param spec : int 
+	@return : Allow
+	-->
+	<select id="allowFormList2" parameterType="int" resultType="Emp.DTO.Allow">
+		select * from allow where allow_no=#{allow_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 항목 리스트 가져 오기
+	@param spec : int 
+	@return : Allow_Basic
+	-->
+	<select id="getAllow_Basic" parameterType="int" resultType="Emp.DTO.Allow_Basic">
+		select * from allow where allow_no=#{allow_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 계산하기
+	@param spec : int 
+	@return : Allow
+	-->
+	<select id="calcul" parameterType="int" resultType="Emp.DTO.Allow">
+		select * from allow where allow_no=#{allow_no}
+	</select> 
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 재직자 퇴직금
+	@param spec : x 
+	@return : Retire
+	-->
+	<select id="retireList"  resultType="Emp.DTO.Retire">
+		select e.emp_no,u.user_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY')) as "step",
+				e.emp_date,j.job_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY'))+1 as "year",
+				(TO_CHAR(sysdate,'MM')-TO_CHAR(e.EMP_DATE,'MM'))+1 as "month",d.dept_name
+				from emp e join user_info u
+				on e.user_id=u.user_id
+				join job j
+				on j.job_name=e.job_name
+				join comp c
+				on c.comp_no=j.comp_no
+				join dept d
+				on d.dept_no=e.dept_no
+				where e.emp_state=1 and emp_division!=0
+				order by emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 퇴직자 퇴직금
+	@param spec : x 
+	@return : Retire
+	-->
+	<select id="retireList2"  resultType="Emp.DTO.Retire">
+		select e.emp_no,u.user_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY')) as "step",
+				e.emp_date,j.job_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY'))+1 as "year",
+				(TO_CHAR(sysdate,'MM')-TO_CHAR(e.EMP_DATE,'MM'))+1 as "month",d.dept_name
+				from emp e join user_info u
+				on e.user_id=u.user_id
+				join job j
+				on j.job_name=e.job_name
+				join comp c
+				on c.comp_no=j.comp_no
+				join dept d
+				on d.dept_no=e.dept_no
+				where e.emp_state=0
+				order by emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 출근후 또 출근 버튼
+	@param spec : Atte
+	-->
+	<update id="updateAtte_go"  parameterType="Emp.DTO.Atte">
+		update atte set atte_go=sysdate 
+		where atte_no=(select max(atte_no) from atte)
+		      and emp_no=2001
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 모든 근태뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="attiAllList"  resultType="Emp.DTO.Atti">
+		select * from atti 
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 20.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="atteAllList"  resultType="Emp.DTO.Atti">
+		select * from atte 
+	</select>
+	
+	<!-- ///////////////////////////////////////////////////// -->
+		
+	<select id="atteListView" resultType="Emp.DTO.Atte">
+select atte_no , to_char(atte_go,'YYYY-MM-DD HH24:MI') as atte_go , to_char(atte_back,'YYYY-MM-DD HH24:MI') as atte_back, 
+atti_kind_no , atti_no , emp_no from atte where emp_no =#{emp_no}
+	</select>
+	
+	
+	<select id="ajaxholilist" resultType="Emp.DTO.Holi">
+		
+		select * from holi where emp_no=#{emp_no}
+		
+	</select>
+	
+	
+	<delete id="deleteholi" parameterType="Emp.DTO.Holi">
+	
+		delete from holi where holi_no = #{holi_no}
+	
+	</delete>
+	
+	<!-- ///////////////////////////////////////////////////// -->
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="empAllowList" resultType="Emp.DTO.EmpAllow">
+		select e.emp_no,u.user_name,d.dept_name
+			from emp e join user_info u
+			on e.user_id=u.user_id
+			join dept d
+			on d.dept_no=e.dept_no
+			where d.dept_name=#{dept_name} and emp_division!=0
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 항목 리스트 가져 오기
+	@param spec : int 
+	@return : Allow
+	-->
+	<select id="allowFormList3" parameterType="int" resultType="Emp.DTO.Allow">
+		select rownum as "allow_no",allow_name,allow_division,allow_sal,
+				allow_calcul,allow_c1,allow_c2,allow_mag,appr_no
+				from allow where allow_name is not null and allow_no!=1
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 수당 기본 항목 작성
+	@param spec : Allow_History
+	-->
+	<insert id="insertEmpAllow" parameterType="Emp.DTO.Allow_History">
+		  insert into allow_history(
+		  						allow_no,
+		  						emp_no
+		                    	  )
+		                    	values
+		                    	(#{allow_no}+1,#{emp_no})		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="eachSal" resultType="Emp.DTO.TotalSal">
+		select nvl(sum(a.allow_sal),0) as "sal"
+			from allow a join allow_history ah
+			on a.allow_no=ah.allow_no
+			where ah.emp_no=#{emp_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="eachSalList" resultType="Emp.DTO.EmpAllow">
+		select e.emp_no,u.user_name,d.dept_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(e.EMP_DATE,'YYYY'))+1 as "step"
+			from emp e join user_info u
+			on e.user_id=u.user_id
+			join dept d
+			on d.dept_no=e.dept_no
+			where e.emp_no=#{emp_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="totalSal" resultType="Emp.DTO.TotalSal">
+		select nvl(sum(a.allow_sal),0) as "sum"
+			from allow a join allow_history ah
+			on a.allow_no=ah.allow_no
+			where ah.emp_no in (select e.emp_no 
+			from dept d join emp e
+			on d.dept_no=e.dept_no
+			where d.dept_name='인사부')
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="sal_SearchList" resultType="Emp.DTO.Sal_Search">
+		select nvl(sum(a.allow_sal),0) as "sal",ah.emp_no,e.job_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(EMP_DATE,'YYYY'))+1 as "step",d.dept_name
+			from allow a join allow_history ah
+			on a.allow_no=ah.allow_no
+      		join emp e
+      		on e.emp_no=ah.emp_no
+          join dept d
+          on d.dept_no=e.dept_no
+      		group by ah.emp_no,e.job_name,(TO_CHAR(sysdate,'YYYY')-TO_CHAR(EMP_DATE,'YYYY'))+1,d.dept_name
+          having d.dept_name='인사부'
+      		order by emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="User_name" resultType="Emp.DTO.User_name">
+		select u.user_name,e.emp_no 
+			from emp e join user_info u
+			on e.user_id=u.user_id
+			join dept d
+			on e.dept_no=d.dept_no
+			where d.dept_name='인사부'
+			order by e.emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="step" resultType="Emp.DTO.Step">
+		select (TO_CHAR(sysdate,'YYYY')-TO_CHAR(EMP_DATE,'YYYY'))+1 as "step"
+      		from emp e join dept d
+      		on e.dept_no=d.dept_no
+     		where d.dept_name='인사부'
+      		order by e.emp_no
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 수당 기본 항목 작성
+	@param spec : EMP
+	-->
+	<update id="delteAllowBasic" >
+		update emp 
+			set emp_division=0 
+			where emp_no=#{emp_no}
+	</update>
+	
+	
+	
+	<select id="getEmp_no" parameterType="Emp.DTO.EMP" resultType="Integer">
+		select distinct emp_no from emp where user_id = #{user_id}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 급여 리스트 삭제 하기
+	@param spec : x
+	-->
+	<delete id="sal_ListDelete" >
+		delete from sal_list where sal_list_no=#{sal_list_no} 
+	</delete>
+	
+	<select id="empno" resultType="Integer">
+		select emp_no from emp where user_id = #{user_id}
+	</select>
+	
+	<select id="empAuthList" parameterType="list" resultType="User.DTO.User_info">
+	    select * from user_info ui
+              where ui.user_id in
+              (select e.user_id
+              from user_info u join emp e
+              on u.user_id=e.user_id)
+	</select>
+	
+	<!-- 
+	 @date
+	:2016. 6. 18.
+	@description : 수당 기본 항목 작성
+	@param spec : EMP
+	-->
+	<update id="updateSal_List" >
+		update sal_list 
+			set sal=#{sal} 
+			where sal_list_no=#{sal_list_no}
+	</update>
+	
+	<!-- 
+	@date
+	:2016. 6. 18.
+	@description : 급여 리스트 삭제 하기
+	@param spec : x
+	-->
+	<delete id="atti_KindDelete" >
+		delete from atti_kind where atti_kind_no=#{atti_kind_no} 
+	</delete>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 모든 출근뽑기
+	@param spec :  
+	@return : Allow
+	-->
+	<select id="docList2" resultType="Emp.DTO.Doc">
+		select d.doc_title,d.doc_content,d.doc_date,d.atti_kind_no
+			from doc d join holi h
+			on h.atti_kind_no=d.atti_kind_no
+			join atti ai
+			on ai.atti_no=h.atti_no
+			join emp e
+			on e.emp_no=ai.emp_no
+			where ai.atti_no=#{atti_no}
+	</select>
+	
+	<!-- 
+	@date
+	:2016. 6. 22.
+	@description : 수당 기본 항목 작성
+	@param spec : Allow_History
+	-->
+	<insert id="insertDocData" parameterType="Emp.DTO.Doc_Data">
+		  insert into doc_data(
+		  						data_no,
+		  						orign_name,
+		  						save_name,
+		  						data_state
+		                    	  )
+		                    	values
+		                    	(doc_data_index.nextval,#{orign_name},#{save_name},1)		              		
+	</insert>
+	
+	<!-- 
+	@date
+	:2016. 6. 09.
+	@description : 선택한 모든 Holi 리스트 가지고오기
+	@param spec : int 
+	@return : Holi 
+	-->
+	<select id="holiList3" parameterType="int" resultType="Emp.DTO.Holi2">
+		select * from Holi 
+				 where atti_no=#{atti_no} 
+				 order by holi_no
+	</select>
+	
+</mapper>

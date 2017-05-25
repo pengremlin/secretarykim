@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="DAO.UserDAO">
+
+	<select id="getAllUser" parameterType="list" resultType="User.DTO.User_info">
+		select * from User_info
+	</select>
+	
+	<select id="getUser" parameterType="String" resultType="User.DTO.User_info">
+		select * from User_info where user_id=#{user_id}
+	</select>
+	
+	<select id="idSearch" parameterType="String" resultType="User.DTO.User_info">
+		select user_id from User_info where user_name=#{user_name} and user_email=#{user_email}
+	</select>
+	
+	<select id="pwdSearch" parameterType="String" resultType="User.DTO.User_info">
+		select user_pwd from User_info where user_id=#{user_id} and user_email=#{user_email}
+	</select>
+	
+	
+	<insert id="joinUser" parameterType="User.DTO.User_info">
+		  insert into user_info(
+		                    user_name,
+		                    user_email,
+		                    user_birth,
+		                    user_id,
+		                    user_pwd,
+		                    user_gender,
+		                    user_add,
+		                    user_ph,
+		                    user_state
+		                    )
+		                    values
+		                    (#{user_name},#{user_email},#{user_birth},#{user_id},#{user_pwd},#{user_gender},#{user_add},#{user_ph},#{user_state})
+	</insert>
+	<insert id="authUser" parameterType="DTO.Auth">
+		  insert into auth values('ROLE_USER',#{user_id})                   
+	</insert>
+	
+	<select id="userCheck" resultType="Integer">
+		SELECT Count(*) ck FROM USER_INFO where USER_ID = #{user_id} 
+	</select>
+</mapper>
+
+
+
+
+
+
+

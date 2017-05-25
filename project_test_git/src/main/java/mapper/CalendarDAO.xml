@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+
+<mapper namespace="DAO.CalendarDAO">
+
+
+	<insert id="insertCal" parameterType="Project.DTO.CalendarDTO">
+		insert into project_version 
+		(version_no , project_no , project_name , version_title )
+		values(version_index.nextval , #{project_no} , #{project_name} , #{version_title} )
+	</insert>
+
+
+<!--  where PROJECT_NO = #{PROJECT_NO} -->
+	<select id="selectCal" resultType="Project.DTO.CalendarDTO">
+		select * from project_version where project_no = #{project_no}
+	</select>
+
+	<update id="dropUpdateCal" parameterType="Project.DTO.CalendarDTO">
+		update project_version set
+		version_start = #{version_start}
+		where version_no =#{version_no}
+	</update>
+
+	<update id="dropUpdateCal2" parameterType="Project.DTO.CalendarDTO">
+		update project_version set
+		version_start = #{version_start} , version_end = #{version_end}
+		where version_no =#{version_no}
+	</update>
+
+	<!--  and PROJECT_NO = #{PROJECT_NO} -->
+	<select id="ajaxCalendar" resultType="Project.DTO.CalendarDTO">
+		select * from project_version
+		where project_no =#{project_no} and version_start is not null
+	</select>
+
+
+	<update id="resiseCal" parameterType="Project.DTO.CalendarDTO">
+		update project_version set
+		version_end = #{version_end}
+		where version_no =#{version_no}
+	</update>
+	
+	<delete id="deleteCal">
+		delete from project_version where version_no = #{version_no}
+	</delete>
+
+</mapper>
+
+
+
+
+
+
+
